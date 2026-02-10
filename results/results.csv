@@ -1,0 +1,10 @@
+Feature,Classifier,Accuracy,Precision,Recall,F1-Score
+BoW,Naive Bayes,1.0,1.0,1.0,1.0
+BoW,Logistic Regression,0.9897,0.9906,0.9906,0.9906
+BoW,SVM,0.9845,0.9813,0.9906,0.9859
+TF-IDF,Naive Bayes,1.0,1.0,1.0,1.0
+TF-IDF,Logistic Regression,0.9948,0.9907,1.0,0.9953
+TF-IDF,SVM,1.0,1.0,1.0,1.0
+Bigram TF-IDF,Naive Bayes,1.0,1.0,1.0,1.0
+Bigram TF-IDF,Logistic Regression,1.0,1.0,1.0,1.0
+Bigram TF-IDF,SVM,1.0,1.0,1.0,1.0

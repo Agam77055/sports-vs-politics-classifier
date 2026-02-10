@@ -1,0 +1,353 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\title{\textbf{Sports vs Politics Text Classification} \\ \large CSL4050 -- Natural Language Understanding \\ Assignment 1, Problem 4}
+\author{Agam Harpreet Singh \\ B23CM1004}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+This report presents a text classification system that categorizes news articles as either \textit{Sports} or \textit{Politics}. We compare three feature representations (Bag of Words, TF-IDF, and Bigram TF-IDF) with three machine learning classifiers (Multinomial Naive Bayes, Logistic Regression, and Linear SVM), giving nine experimental combinations in total. The system is evaluated on a dataset of 968 articles from the BBC News corpus along with some manually curated articles. All combinations achieve accuracy above 98\%, with seven out of nine reaching perfect classification. TF-IDF features consistently outperform raw BoW, and Bigram TF-IDF achieves perfect scores with all three classifiers.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ==============================================================
+\section{Introduction}
+
+Text classification is one of the core tasks in Natural Language Processing (NLP). The idea is to assign a predefined category label to a given text document. It has many practical applications like spam detection, sentiment analysis, topic labeling, and content recommendation.
+
+In this project, we tackle the binary classification of news articles into two categories: \textbf{Sports} and \textbf{Politics}. We compare multiple feature extraction techniques and ML models to find the best combination for this task.
+
+We evaluate:
+\begin{itemize}
+    \item \textbf{3 Feature Representations:} Bag of Words (BoW), TF-IDF, and Bigram TF-IDF.
+    \item \textbf{3 Classifiers:} Multinomial Naive Bayes, Logistic Regression, and Linear SVM.
+\end{itemize}
+
+This gives us 9 experimental combinations in total. Each one is evaluated on accuracy, precision, recall, and F1-score using a stratified held-out test set.
+
+% ==============================================================
+\section{Data Collection}
+
+\subsection{Sources}
+
+The dataset was built by combining two sources:
+
+\begin{enumerate}
+    \item \textbf{BBC News Dataset:} A publicly available dataset from the Machine Learning Group at University College Dublin~\cite{greene2006}. It has 2,225 articles across five categories (business, entertainment, politics, sport, tech). We took articles from the \texttt{sport} category (511 articles) and the \texttt{politics} category (417 articles).
+
+    \item \textbf{Curated Supplementary Articles:} To add some diversity, we manually wrote 20 extra articles per category. Sports articles covered topics like FIFA, Olympics, NBA, tennis, cricket, and Formula One. Politics articles covered elections, parliament, diplomacy, trade deals, and defense policy.
+\end{enumerate}
+
+\subsection{Dataset Statistics}
+
+The final dataset has \textbf{968 articles}:
+\begin{itemize}
+    \item Sports: 531 articles (54.9\%)
+    \item Politics: 437 articles (45.1\%)
+\end{itemize}
+
+There is a mild class imbalance but both classes have enough samples for training and evaluation. Figure~\ref{fig:class_dist} shows the distribution.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{plots/class_distribution.png}
+    \caption{Class distribution in the dataset.}
+    \label{fig:class_dist}
+\end{figure}
+
+% ==============================================================
+\section{Preprocessing}
+
+Before extracting features, each article goes through the following preprocessing steps:
+
+\begin{enumerate}
+    \item \textbf{Lowercasing:} Convert all text to lowercase so ``Sports'' and ``sports'' are treated the same.
+
+    \item \textbf{Punctuation and Number Removal:} Strip all non-alphabetic characters using a regex filter (\texttt{re.sub(r"[\^{}a-z\textbackslash s]", "", text)}). Numbers don't really help with topic classification so they are removed.
+
+    \item \textbf{Stopword Removal:} Remove common English stopwords (about 100 words like \textit{a, the, is, was, in, on}, etc.) using a hardcoded list. These words appear equally in both classes and don't help distinguish them.
+
+    \item \textbf{Short Token Removal:} Single-character tokens are removed since they are mostly noise left over after punctuation removal.
+\end{enumerate}
+
+We did not apply stemming or lemmatization to keep the pipeline simple and reproducible without needing external NLP libraries. The cleaned text is then passed to feature extraction.
+
+% ==============================================================
+\section{Feature Representations}
+
+We compare three methods to convert text into numerical vectors.
+
+\subsection{Bag of Words (BoW)}
+
+Bag of Words represents each document as a vector of word counts. Each dimension is a unique word from the vocabulary and the value is how many times it appears in the document. For a document $d$ and vocabulary $V = \{w_1, w_2, \ldots, w_n\}$:
+\[
+\text{BoW}(d) = [\text{count}(w_1, d),\ \text{count}(w_2, d),\ \ldots,\ \text{count}(w_n, d)]
+\]
+We use \texttt{CountVectorizer} from scikit-learn with \texttt{max\_features=5000}.
+
+\subsection{TF-IDF}
+
+TF-IDF (Term Frequency--Inverse Document Frequency) improves on BoW by weighting words based on how discriminative they are. Words that appear often in one document but rarely in the overall corpus get higher weights:
+\[
+\text{TF-IDF}(w, d) = \text{TF}(w, d) \times \log\left(\frac{N}{\text{DF}(w)}\right)
+\]
+where $\text{TF}(w,d)$ is the term frequency, $N$ is the total number of documents, and $\text{DF}(w)$ is how many documents contain word $w$. The IDF part basically down-weights common words that show up in both classes even after stopword removal. We use \texttt{TfidfVectorizer} with \texttt{max\_features=5000}.
+
+\subsection{Bigram TF-IDF}
+
+This extends TF-IDF by also including bigrams (pairs of consecutive words) along with single words. For example, ``prime minister'' as a bigram carries more meaning than ``prime'' and ``minister'' separately. We use \texttt{TfidfVectorizer} with \texttt{ngram\_range=(1,2)} and \texttt{max\_features=5000}.
+
+\subsection{Word Clouds}
+
+Figures~\ref{fig:wc_sports} and~\ref{fig:wc_politics} show the most frequent terms in each class after preprocessing. The word clouds make it clear that the two classes have very different vocabularies: sports articles have words like \textit{game, player, team, win, world}, while politics articles have \textit{government, party, election, minister, labour}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{plots/wordcloud_sports.png}
+    \caption{Word cloud for Sports articles.}
+    \label{fig:wc_sports}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{plots/wordcloud_politics.png}
+    \caption{Word cloud for Politics articles.}
+    \label{fig:wc_politics}
+\end{figure}
+
+% ==============================================================
+\section{Machine Learning Classifiers}
+
+\subsection{Multinomial Naive Bayes}
+
+Naive Bayes is a probabilistic classifier based on Bayes' theorem. It makes the ``naive'' assumption that all features are conditionally independent given the class. The Multinomial variant works with word counts and computes:
+\[
+P(c \mid d) \propto P(c) \prod_{w \in d} P(w \mid c)
+\]
+Even though the independence assumption is not realistic for language, Naive Bayes still works well on text because the feature space is so high-dimensional and sparse that the assumption doesn't hurt much in practice.
+
+\subsection{Logistic Regression}
+
+Logistic Regression is a discriminative linear classifier. It models the class probability using the sigmoid function:
+\[
+P(y=1 \mid x) = \sigma(w^T x + b) = \frac{1}{1 + e^{-(w^T x + b)}}
+\]
+The weight vector $w$ is learned via maximum likelihood estimation with L2 regularization. It works well for text since the feature space is sparse and high-dimensional, and the learned weights can be used to see which words matter most. We use \texttt{max\_iter=1000} so it converges properly.
+
+\subsection{Support Vector Machine (SVM)}
+
+SVM tries to find the hyperplane that separates the two classes with the maximum margin:
+\[
+\min_{w,b} \frac{1}{2} \|w\|^2 \quad \text{subject to} \quad y_i(w^T x_i + b) \geq 1 \quad \forall\, i
+\]
+Linear SVM works well for text classification because text features tend to be high-dimensional and linearly separable. We use \texttt{LinearSVC} from scikit-learn with \texttt{max\_iter=2000}.
+
+% ==============================================================
+\section{Experiments and Results}
+
+\subsection{Experimental Setup}
+
+We split the data into \textbf{80\% training} (774 articles) and \textbf{20\% testing} (194 articles) using stratified sampling to keep the class proportions the same. Each feature representation was combined with each classifier, giving 9 experiments total. A fixed random seed (\texttt{SEED=42}) was used for reproducibility.
+
+\subsection{Results}
+
+Table~\ref{tab:results} shows the results for all 9 combinations.
+
+\begin{table}[H]
+    \centering
+    \caption{Performance of all 9 feature-classifier combinations on the test set.}
+    \label{tab:results}
+    \begin{tabular}{llcccc}
+        \toprule
+        \textbf{Feature} & \textbf{Classifier} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+        \midrule
+        BoW          & Naive Bayes          & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        BoW          & Logistic Regression  & 0.9897 & 0.9906 & 0.9906 & 0.9906 \\
+        BoW          & SVM                  & 0.9845 & 0.9813 & 0.9906 & 0.9859 \\
+        \midrule
+        TF-IDF       & Naive Bayes          & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        TF-IDF       & Logistic Regression  & 0.9948 & 0.9907 & 1.0000 & 0.9953 \\
+        TF-IDF       & SVM                  & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \midrule
+        Bigram TF-IDF & Naive Bayes         & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        Bigram TF-IDF & Logistic Regression & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        Bigram TF-IDF & SVM                 & 1.0000 & 1.0000 & 1.0000 & 1.0000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\noindent Some key observations:
+\begin{itemize}
+    \item All 9 combinations get accuracy above 98\%.
+    \item \textbf{7 out of 9} get perfect classification (100\% on everything).
+    \item The only imperfect results are with \textbf{BoW features}: Logistic Regression (98.97\% accuracy, 2 errors) and SVM (98.45\% accuracy, 3 errors).
+    \item \textbf{Bigram TF-IDF} gets perfect scores with all three classifiers.
+\end{itemize}
+
+\subsection{F1-Score Comparison}
+
+Figure~\ref{fig:f1} compares the F1-scores across all 9 experiments. BoW + Logistic Regression and BoW + SVM are the only two that don't reach perfect, but both are still above 0.985.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{plots/f1_comparison.png}
+    \caption{F1-score comparison across all 9 combinations.}
+    \label{fig:f1}
+\end{figure}
+
+\subsection{Confusion Matrices}
+
+Figures~\ref{fig:cm_bow} to~\ref{fig:cm_bigram} show confusion matrices for all 9 experiments, grouped by feature type.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_BoW_Naive_Bayes.png}
+        \caption{Naive Bayes}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_BoW_Logistic_Regression.png}
+        \caption{Logistic Regression}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_BoW_SVM.png}
+        \caption{SVM}
+    \end{subfigure}
+    \caption{Confusion matrices for \textbf{BoW} features. Naive Bayes is perfect. LR misclassifies 1 sports as politics and 1 politics as sports. SVM misclassifies 1 sports as politics and 2 politics as sports.}
+    \label{fig:cm_bow}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_TFIDF_Naive_Bayes.png}
+        \caption{Naive Bayes}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_TFIDF_Logistic_Regression.png}
+        \caption{Logistic Regression}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_TFIDF_SVM.png}
+        \caption{SVM}
+    \end{subfigure}
+    \caption{Confusion matrices for \textbf{TF-IDF} features. NB and SVM are perfect. LR has just 1 error (1 politics article predicted as sports).}
+    \label{fig:cm_tfidf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_Bigram_TFIDF_Naive_Bayes.png}
+        \caption{Naive Bayes}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_Bigram_TFIDF_Logistic_Regression.png}
+        \caption{Logistic Regression}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{plots/cm_Bigram_TFIDF_SVM.png}
+        \caption{SVM}
+    \end{subfigure}
+    \caption{Confusion matrices for \textbf{Bigram TF-IDF} features. All three classifiers get perfect classification.}
+    \label{fig:cm_bigram}
+\end{figure}
+
+\subsection{Analysis}
+
+\subsubsection{High Overall Performance}
+
+The near-perfect results across the board make sense when you look at how different the vocabularies of the two classes are. The word clouds (Figures~\ref{fig:wc_sports} and \ref{fig:wc_politics}) show this clearly: sports articles use words like \textit{game, player, team, win, cup, match}, while politics articles use \textit{government, election, party, minister, labour, parliament}. There is very little overlap, so even a basic classifier can separate them easily.
+
+\subsubsection{BoW vs TF-IDF}
+
+The only errors happen with raw BoW features (with LR and SVM). The reason is that BoW gives equal weight to all words based on raw counts. So words that survived stopword removal but still appear in both classes (like ``said'', ``year'', ``new'', ``people'') end up getting too much weight. TF-IDF fixes this because the IDF part down-weights words that are common across the whole corpus, and gives more weight to words that are actually class-specific. That's why switching to TF-IDF removes the remaining errors for SVM and reduces them for LR.
+
+\subsubsection{Bigram TF-IDF}
+
+Bigram TF-IDF gets perfect scores with all three classifiers. This makes sense because bigrams capture phrases like ``prime minister'' and ``general election'' (politics) or ``world cup'' and ``premier league'' (sports). These multi-word phrases are very strong indicators of the class, and they give the classifiers extra signal on top of single words.
+
+\subsubsection{Error Analysis}
+
+Looking at the confusion matrices for the two imperfect models:
+\begin{itemize}
+    \item \textbf{BoW + LR} (Figure~\ref{fig:cm_bow}b): 2 errors total, 1 sports article predicted as politics and 1 politics article predicted as sports. The errors are symmetric, which suggests these were probably borderline articles that had mixed vocabulary.
+    \item \textbf{BoW + SVM} (Figure~\ref{fig:cm_bow}c): 3 errors, 1 sports as politics and 2 politics as sports. The fact that more politics articles got mislabeled as sports could be because SVM's decision boundary is slightly shifted towards the majority class (sports has more training samples).
+\end{itemize}
+
+\subsubsection{Naive Bayes Consistency}
+
+Naive Bayes gets perfect scores with all three feature representations. This is probably because of how it works: it estimates $P(w \mid c)$ independently for each word and class, so it is not as affected by noisy or overlapping features. Even with raw word counts (BoW), the class-conditional distributions are different enough for NB to get everything right.
+
+% ==============================================================
+\section{Limitations}
+
+\begin{enumerate}
+    \item \textbf{Dataset Size and Source:} 968 articles mostly from BBC. Using a single news source could introduce vocabulary bias. Testing on articles from Reuters, Guardian, etc.\ would give a better picture of how well the model generalizes.
+
+    \item \textbf{Easy Task:} Sports and politics have very different vocabularies which makes this a fairly easy classification problem. If we tried politics vs.\ business or sports vs.\ entertainment, the results would probably be worse.
+
+    \item \textbf{No Cross-Validation:} We only did a single 80/20 split. $K$-fold cross-validation would give more reliable performance numbers.
+
+    \item \textbf{Traditional Features Only:} We only used bag-of-words style features. Word embeddings (Word2Vec, GloVe) or transformer models (BERT) can capture meaning beyond surface-level word counts, but for this particular task they are probably overkill.
+
+    \item \textbf{No Stemming/Lemmatization:} We skipped this to keep things simple. But it means ``running'' and ``run'' are treated as separate words, which increases the vocabulary size without adding useful information.
+\end{enumerate}
+
+% ==============================================================
+\section{Conclusion}
+
+We built a text classifier to tell apart sports and politics articles, comparing 3 feature representations and 3 ML classifiers across 9 combinations. All of them achieved above 98\% accuracy, and 7 out of 9 got perfect scores.
+
+The main takeaways:
+\begin{itemize}
+    \item \textbf{Bigram TF-IDF} is the best feature representation, perfect with all classifiers.
+    \item \textbf{Naive Bayes} is the most consistent classifier, perfect with all feature types.
+    \item \textbf{TF-IDF weighting} helps over raw BoW by reducing the impact of common words.
+    \item The few errors that do occur are all with \textbf{BoW} features, where common cross-class words don't get down-weighted.
+\end{itemize}
+
+These results show that traditional ML methods work very well for topic classification when the categories have clearly different vocabularies. For future work, it would be interesting to try harder classification tasks with overlapping categories, bigger and more diverse datasets, and test whether the model generalizes across different news sources.
+
+% ==============================================================
+\section*{References}
+
+\begin{enumerate}[label={[\arabic*]}]
+    \item \label{ref:greene} D.~Greene and P.~Cunningham, ``Practical Solutions to the Problem of Diagonal Dominance in Kernel Document Clustering,'' \textit{Proc.\ ICML}, 2006. (BBC Dataset)
+    \item F.~Pedregosa et al., ``Scikit-learn: Machine Learning in Python,'' \textit{JMLR}, vol.~12, pp.~2825--2830, 2011.
+    \item C.~Manning, P.~Raghavan, and H.~Sch\"{u}tze, \textit{Introduction to Information Retrieval}, Cambridge University Press, 2008.
+    \item A.~McCallum and K.~Nigam, ``A Comparison of Event Models for Naive Bayes Text Classification,'' \textit{AAAI Workshop on Learning for Text Categorization}, 1998.
+    \item T.~Joachims, ``Text Categorization with Support Vector Machines: Learning with Many Relevant Features,'' \textit{Proc.\ ECML}, 1998.
+\end{enumerate}
+
+\end{document}

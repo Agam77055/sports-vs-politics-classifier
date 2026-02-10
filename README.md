@@ -7,7 +7,7 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-success?style=flat-square" alt="License: MIT"/></a>
   </p>
   <p>CSL4050 &mdash; Natural Language Understanding | Assignment 1, Problem 4</p>
-  <p><em>Agam Singh (B23CM1004)</em></p>
+  <p><em>Agam Harpreet Singh (B23CM1004)</em></p>
 </div>
 
 <br/>

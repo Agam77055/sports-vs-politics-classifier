@@ -2,87 +2,85 @@
 
 # Sports vs Politics Text Classification
 
-### Comparing Feature Representations and ML Classifiers for News Article Classification
+**Comparing Feature Representations and ML Classifiers for News Article Classification**
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.0+-orange.svg)](https://scikit-learn.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.0+-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-success?style=flat-square)](LICENSE)
 
-**CSL4050 -- Natural Language Understanding | Assignment 1, Problem 4**
+CSL4050 -- Natural Language Understanding | Assignment 1, Problem 4
 
 *Agam Harpreet Singh (B23CM1004)*
 
----
-
 </div>
+
+<br/>
 
 ## Overview
 
-This project builds a binary text classifier to distinguish **Sports** from **Politics** news articles. We systematically evaluate **9 combinations** of feature representations and machine learning classifiers, and report results on a held-out test set.
+A binary text classifier that distinguishes **Sports** from **Politics** news articles. We systematically compare **9 combinations** of 3 feature representations and 3 ML classifiers on a dataset of 968 articles.
 
-> **Key Result:** 7 out of 9 combinations achieve **perfect classification** (100% accuracy). All combinations exceed 98% accuracy.
+> **Result:** 7 out of 9 combinations achieve **100% accuracy**. All combinations exceed **98%**.
 
----
+<br/>
 
 ## Dataset
 
-| | Count | Percentage |
-|---|---|---|
-| **Sports** | 531 | 54.9% |
-| **Politics** | 437 | 45.1% |
-| **Total** | **968** | 100% |
+The dataset was assembled from two sources:
 
-**Sources:**
-- [BBC News Dataset](http://mlg.ucd.ie/datasets/bbc.html) (511 sport + 417 politics articles)
-- 20 manually curated articles per category covering diverse subtopics
+| Source | Sports | Politics | Total |
+|:-------|:------:|:--------:|:-----:|
+| [BBC News Dataset](http://mlg.ucd.ie/datasets/bbc.html) | 511 | 417 | 928 |
+| Curated supplementary articles | 20 | 20 | 40 |
+| **Combined** | **531** | **437** | **968** |
 
 <p align="center">
-  <img src="plots/class_distribution.png" width="450"/>
+  <img src="plots/class_distribution.png" width="400"/>
 </p>
 
----
+<br/>
 
-## Method
+## Approach
+
+### Preprocessing
+
+```
+Raw Text  -->  Lowercase  -->  Remove Punctuation/Numbers  -->  Remove Stopwords  -->  Clean Tokens
+```
 
 ### Feature Representations
 
-| Method | Description |
-|--------|-------------|
-| **Bag of Words** | Raw word count vectors (`CountVectorizer`, 5000 features) |
-| **TF-IDF** | Term frequency weighted by inverse document frequency (`TfidfVectorizer`, 5000 features) |
-| **Bigram TF-IDF** | TF-IDF with unigrams + bigrams (`ngram_range=(1,2)`, 5000 features) |
+| # | Method | Description | Implementation |
+|:-:|--------|-------------|----------------|
+| 1 | **Bag of Words** | Raw word count vectors | `CountVectorizer(max_features=5000)` |
+| 2 | **TF-IDF** | Term frequency weighted by inverse document frequency | `TfidfVectorizer(max_features=5000)` |
+| 3 | **Bigram TF-IDF** | TF-IDF with unigrams + bigrams | `TfidfVectorizer(ngram_range=(1,2))` |
 
 ### Classifiers
 
-| Classifier | Type |
-|-----------|------|
-| **Multinomial Naive Bayes** | Probabilistic (generative) |
-| **Logistic Regression** | Linear (discriminative) |
-| **Linear SVM** | Maximum-margin (discriminative) |
+| # | Model | Type | Implementation |
+|:-:|-------|------|----------------|
+| 1 | **Multinomial Naive Bayes** | Probabilistic (generative) | `MultinomialNB()` |
+| 2 | **Logistic Regression** | Linear (discriminative) | `LogisticRegression(max_iter=1000)` |
+| 3 | **Linear SVM** | Maximum-margin | `LinearSVC(max_iter=2000)` |
 
-### Preprocessing Pipeline
-
-```
-Raw Text -> Lowercase -> Remove punctuation/numbers -> Remove stopwords -> Remove short tokens
-```
-
----
+<br/>
 
 ## Results
 
-### Performance Table
+### Performance Comparison (3 Features x 3 Classifiers = 9 Experiments)
 
 | Feature | Classifier | Accuracy | Precision | Recall | F1-Score |
 |:--------|:-----------|:--------:|:---------:|:------:|:--------:|
-| BoW | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
+| BoW | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
 | BoW | Logistic Regression | 0.9897 | 0.9906 | 0.9906 | 0.9906 |
 | BoW | SVM | 0.9845 | 0.9813 | 0.9906 | 0.9859 |
-| TF-IDF | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
+| TF-IDF | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
 | TF-IDF | Logistic Regression | 0.9948 | 0.9907 | 1.0000 | 0.9953 |
-| TF-IDF | SVM | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
-| Bigram TF-IDF | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
-| Bigram TF-IDF | Logistic Regression | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
-| Bigram TF-IDF | SVM | **1.0000** | 1.0000 | 1.0000 | 1.0000 |
+| TF-IDF | SVM | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
+| Bigram TF-IDF | Naive Bayes | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
+| Bigram TF-IDF | Logistic Regression | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
+| Bigram TF-IDF | SVM | **1.0000** | 1.0000 | 1.0000 | **1.0000** |
 
 ### F1-Score Comparison
 
@@ -92,47 +90,59 @@ Raw Text -> Lowercase -> Remove punctuation/numbers -> Remove stopwords -> Remov
 
 ### Word Clouds
 
-<p align="center">
-  <img src="plots/wordcloud_sports.png" width="420"/>
-  <img src="plots/wordcloud_politics.png" width="420"/>
-</p>
+<table>
+  <tr>
+    <td align="center"><strong>Sports</strong></td>
+    <td align="center"><strong>Politics</strong></td>
+  </tr>
+  <tr>
+    <td><img src="plots/wordcloud_sports.png" width="400"/></td>
+    <td><img src="plots/wordcloud_politics.png" width="400"/></td>
+  </tr>
+</table>
 
 ### Confusion Matrices
 
-**Bag of Words**
-
+<details>
+<summary><strong>Bag of Words</strong> (click to expand)</summary>
+<br/>
 <p align="center">
   <img src="plots/cm_BoW_Naive_Bayes.png" width="270"/>
   <img src="plots/cm_BoW_Logistic_Regression.png" width="270"/>
   <img src="plots/cm_BoW_SVM.png" width="270"/>
 </p>
+</details>
 
-**TF-IDF**
-
+<details>
+<summary><strong>TF-IDF</strong> (click to expand)</summary>
+<br/>
 <p align="center">
   <img src="plots/cm_TFIDF_Naive_Bayes.png" width="270"/>
   <img src="plots/cm_TFIDF_Logistic_Regression.png" width="270"/>
   <img src="plots/cm_TFIDF_SVM.png" width="270"/>
 </p>
+</details>
 
-**Bigram TF-IDF**
-
+<details>
+<summary><strong>Bigram TF-IDF</strong> (click to expand)</summary>
+<br/>
 <p align="center">
   <img src="plots/cm_Bigram_TFIDF_Naive_Bayes.png" width="270"/>
   <img src="plots/cm_Bigram_TFIDF_Logistic_Regression.png" width="270"/>
   <img src="plots/cm_Bigram_TFIDF_SVM.png" width="270"/>
 </p>
+</details>
 
----
+<br/>
 
 ## Key Findings
 
-- **Bigram TF-IDF** is the strongest feature set -- perfect with all 3 classifiers.
-- **Naive Bayes** is the most consistent classifier -- perfect with all 3 feature types.
-- **TF-IDF weighting** helps over raw BoW by reducing the impact of common cross-class words like "said", "year", "new".
-- The only errors (2-3 misclassifications) occur with **BoW + LR** and **BoW + SVM**, where raw counts give too much weight to non-discriminative terms.
+- **Bigram TF-IDF** is the strongest feature set -- perfect scores with all 3 classifiers
+- **Naive Bayes** is the most consistent classifier -- perfect scores with all 3 feature types
+- **TF-IDF weighting** helps over raw BoW by down-weighting common cross-class words
+- The only errors (2-3 misclassifications) occur with **BoW + LR** and **BoW + SVM**
 
----
+<br/>
 
 ## Quick Start
 
@@ -144,35 +154,33 @@ cd sports-vs-politics-classifier
 # install dependencies
 pip install -r requirements.txt
 
-# run the classifier
+# run the full pipeline (trains all 9 models, prints results, saves plots)
 python B23CM1004_prob4.py
 ```
 
-The script will train all 9 models, print results, and save plots to `plots/`.
-
----
+<br/>
 
 ## Project Structure
 
 ```
 .
-├── B23CM1004_prob4.py        # main classification script
-├── collect_data.py           # data collection and assembly
-├── report.tex                # detailed LaTeX report
-├── requirements.txt          # Python dependencies
+├── B23CM1004_prob4.py          # main classifier script (train, evaluate, plot)
+├── collect_data.py             # data collection and assembly
+├── report.tex                  # LaTeX source for the detailed report
+├── requirements.txt            # Python dependencies
 ├── data/
-│   └── dataset.csv           # 968 labelled articles
-├── plots/
+│   └── dataset.csv             # 968 labelled articles (sports / politics)
+├── plots/                      # all generated visualizations
 │   ├── class_distribution.png
 │   ├── f1_comparison.png
 │   ├── wordcloud_sports.png
 │   ├── wordcloud_politics.png
-│   └── cm_*.png              # 9 confusion matrix plots
+│   └── cm_*.png                # 9 confusion matrix heatmaps
 └── results/
-    └── results.csv           # metrics for all 9 experiments
+    └── results.csv             # metrics for all 9 experiments
 ```
 
----
+<br/>
 
 ## References
 
@@ -183,5 +191,5 @@ The script will train all 9 models, print results, and save plots to `plots/`.
 ---
 
 <div align="center">
-  <sub>CSL4050 Natural Language Understanding | IIT Mandi | February 2026</sub>
+  <sub>CSL4050 Natural Language Understanding | IIT Jodhpur | February 2026</sub>
 </div>

@@ -1,17 +1,13 @@
 <div align="center">
-
-# Sports vs Politics Text Classification
-
-**Comparing Feature Representations and ML Classifiers for News Article Classification**
-
-[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.0+-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-success?style=flat-square)](LICENSE)
-
-CSL4050 -- Natural Language Understanding | Assignment 1, Problem 4
-
-*Agam Harpreet Singh (B23CM1004)*
-
+  <h1>Sports vs Politics Text Classification</h1>
+  <p><strong>Comparing Feature Representations and ML Classifiers for News Article Classification</strong></p>
+  <p>
+    <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/></a>
+    <a href="https://scikit-learn.org"><img src="https://img.shields.io/badge/scikit--learn-1.0+-F7931E?style=flat-square&logo=scikit-learn&logoColor=white" alt="scikit-learn"/></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-success?style=flat-square" alt="License: MIT"/></a>
+  </p>
+  <p>CSL4050 &mdash; Natural Language Understanding | Assignment 1, Problem 4</p>
+  <p><em>Agam Singh (B23CM1004)</em></p>
 </div>
 
 <br/>
@@ -190,6 +186,6 @@ python B23CM1004_prob4.py
 
 ---
 
-<div align="center">
+<p align="center">
   <sub>CSL4050 Natural Language Understanding | IIT Jodhpur | February 2026</sub>
-</div>
+</p>
